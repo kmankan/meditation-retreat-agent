@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .day {
+            border: 1px solid #ccc;
+            padding: 5px;
+            min-height: 100px;
+            position: relative;
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .event {
+            background-color: #e0f0ff;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin-bottom: 2px;
+            font-size: 0.8em;
+        }
+        .month-year {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-buttons">
+        <button id="prevMonth">Previous Month</button>
+        <button id="nextMonth">Next Month</button>
+    </div>
+    <div id="monthYear" class="month-year"></div>
+    <div id="calendar"></div>
+
+    <script>
+        const jsonData = `[\n  {\n    "title": "Berkeley Retreat",\n    "start-date": "2024-10-11",\n    "end-date": "2024-10-14",\n    "location": "Berkeley, CA",\n    "url": "https://meditatewithtucker.com/berkeley/"\n  },\n  {\n    "title": "Bowie Retreat",\n    "start-date": "2024-11-08",\n    "end-date": "2024-11-24",\n    "location": "Bowie, AZ",\n    "url": "https://meditatewithtucker.com/annual-retreat-faq/"\n  },\n  {\n    "title": "Australia Retreat with Kynan Tan",\n    "start-date": "2025-03-25",\n    "end-date": "2025-03-30",\n    "location": "Wilton, NSW, Australia",\n    "url": "https://events.humanitix.com/dr-tucker-peck"\n  },\n  {\n    "title": "Glastonbury Retreat",\n    "start-date": "2025-05-11",\n    "end-date": "2025-05-20",\n    "location": "Glastonbury, England",\n    "url": "https://meditatewithtucker.com/glastonbury/"\n  }\n]`;
+
+        const events = JSON.parse(jsonData);
+        let currentDate = new Date();
+
+        function renderCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const monthYearEl = document.getElementById('monthYear');
+            calendarEl.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            monthYearEl.textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                calendarEl.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dayEl = document.createElement('div');
+                dayEl.classList.add('day');
+                dayEl.innerHTML = `<div class="day-number">${day}</div>`;
+
+                const currentDay = new Date(year, month, day);
+                events.forEach(event => {
+                    const startDate = new Date(event['start-date']);
+                    const endDate = new Date(event['end-date']);
+                    if (currentDay >= startDate && currentDay <= endDate) {
+                        const eventEl = document.createElement('div');
+                        eventEl.classList.add('event');
+                        eventEl.textContent = event.title;
+                        eventEl.title = `${event.title}\nLocation: ${event.location}\nDates: ${event['start-date']} to ${event['end-date']}`;
+                        eventEl.onclick = () => window.open(event.url, '_blank');
+                        dayEl.appendChild(eventEl);
+                    }
+                });
+
+                calendarEl.appendChild(dayEl);
+            }
+        }
+
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        renderCalendar();
+    </script>
+</body>
+</html>
