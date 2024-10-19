@@ -1,3 +1,5 @@
+import { getDOMTree } from "./extractDOM";
+
 // Step 0: Setup
 const dotenv = require("dotenv");
 const { Julep } = require("@julep/sdk");
@@ -10,14 +12,24 @@ const client = new Julep({
   environment: process.env.JULEP_ENVIRONMENT || "production",
 });
 
+// get the DOM tree
+const url = 'https://deconstructingyourself.com/';
+getDOMTree(url)
+  .then(domTree => console.log(domTree))
+  .catch(error => console.error('Error:', error));
+
+
+
+
+
 /* Step 1: Create an Agent */
 
 async function createAgent() {
   const agent = await client.agents.create({
-    name: "Storytelling Agent",
+    name: "DOM Parsing and Navigation Agent",
     model: "claude-3.5-sonnet",
     about:
-      "You are a creative storyteller that crafts engaging stories on a myriad of topics.",
+      "You are an expert navigator of DOMs",
   });
   return agent;
 }

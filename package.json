@@ -9,6 +9,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@julep/sdk": "^1.18.0"
+    "@julep/sdk": "^1.18.0",
+    "playwright": "^1.48.1"
   }
 }
