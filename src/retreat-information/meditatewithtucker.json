@@ -1,0 +1,30 @@
+[
+  {
+    "title": "Berkeley Retreat",
+    "start-date": "2024-10-11",
+    "end-date": "2024-10-14",
+    "location": "Berkeley, CA",
+    "url": "https://meditatewithtucker.com/berkeley/"
+  },
+  {
+    "title": "Bowie Retreat",
+    "start-date": "2024-11-08",
+    "end-date": "2024-11-24",
+    "location": "Bowie, AZ",
+    "url": "https://meditatewithtucker.com/annual-retreat-faq/"
+  },
+  {
+    "title": "Australia Retreat with Kynan Tan",
+    "start-date": "2025-03-25",
+    "end-date": "2025-03-30",
+    "location": "Wilton, NSW, Australia",
+    "url": "https://events.humanitix.com/dr-tucker-peck"
+  },
+  {
+    "title": "Glastonbury Retreat",
+    "start-date": "2025-05-11",
+    "end-date": "2025-05-20",
+    "location": "Glastonbury, England",
+    "url": "https://meditatewithtucker.com/glastonbury/"
+  }
+]
