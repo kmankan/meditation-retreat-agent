@@ -1,4 +1,14 @@
 import { extractSiteStructure } from "./extractDOM";
+import { fetchWebsiteContent } from "./makeWebsiteReadable";
+
+interface WebsiteContent {
+  url: string;
+  content: {
+    [key: string]: any;  // This allows for any JSON structure
+  };
+}
+
+type UnstructuredSiteDataType = WebsiteContent[]
 
 // Step 0: Setup
 const dotenv = require("dotenv");
@@ -69,7 +79,7 @@ async function executeTask(taskId, siteStructure) {
   }
 }
 
-async function main() {
+async function agent1(): Promise<string[]>  {
   try {
     // Step 1: Extract the site structure
     console.log("Extracting site structure...");
@@ -88,14 +98,39 @@ async function main() {
 
     // Step 4: Execute the task with the extracted site structure
     console.log("Executing task...");
-    const result = await executeTask(task.id, siteStructure);
+    const result = JSON.parse(await executeTask(task.id, siteStructure));
+    console.log('this is what the agent produced', result, "it is", typeof(result))
     console.log("Task execution completed. Result:", result);
+
+    return result as string[];  // Explicitly cast the result to string[]
 
   } catch (error) {
     console.error("An error occurred:", error);
+    return [];
   }
 }
 
-main()
-  .then(() => console.log("Done"))
-  .catch(console.error);
+// In your main execution flow:
+async function main() {
+  const urlToScrape: string[] = await agent1();
+  console.log('checking',urlToScrape)
+  console.log(typeof(urlToScrape))
+
+  const unstructuredSiteData: Promise<UnstructuredSiteDataType> = Promise.all(
+    urlToScrape.map(async (url) => {
+      const content = await fetchWebsiteContent(url);
+      return { url, content };
+    })
+  );
+
+  // Using the result
+  unstructuredSiteData.then((data) => {
+    console.log(data);
+  }).catch((error) => {
+    console.error("An error occurred:", error);
+  });
+}
+
+// Call the main function
+main().catch(error => console.error("Main execution error:", error));
+

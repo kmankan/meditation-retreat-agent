@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@julep/sdk": "^1.18.0",
+    "axios": "^1.7.7",
     "playwright": "^1.48.1"
   }
 }
