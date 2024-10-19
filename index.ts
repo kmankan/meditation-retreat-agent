@@ -1,4 +1,4 @@
-import { getDOMTree } from "./extractDOM";
+import { extractSiteStructure } from "./extractDOM";
 
 // Step 0: Setup
 const dotenv = require("dotenv");
@@ -8,128 +8,38 @@ const yaml = require("yaml");
 dotenv.config();
 
 const client = new Julep({
-  apiKey: process.env.JULEP_API_KEY,
-  environment: process.env.JULEP_ENVIRONMENT || "production",
+  apiKey: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzQ1NTEyODAsImlhdCI6MTcyOTM2NzI4MCwic3ViIjoiNDRlNmQ1M2UtYzcxOC01NWM5LWI4YTctODkyZDMwZjlmYzBjIn0.REK897Uc56UqtelT9IMxSeRRQZL3oVERCu4lObvLDGd5-wvauIR68IAhjbpZTLbwo82GgG6-Qk7KkDQxLSakXw",
+  environment: process.env.JULEP_ENVIRONMENT || "dev",
 });
 
-// get the DOM tree
-const url = 'https://deconstructingyourself.com/';
-getDOMTree(url)
-  .then(domTree => console.log(domTree))
-  .catch(error => console.error('Error:', error));
-
-
-
-
-
-/* Step 1: Create an Agent */
+const url = 'https://meditatewithtucker.com/';
 
 async function createAgent() {
   const agent = await client.agents.create({
     name: "DOM Parsing and Navigation Agent",
     model: "claude-3.5-sonnet",
-    about:
-      "You are an expert navigator of DOMs",
+    about: "You are an expert at navigating site trees and structures and finding the right pages for the information the user wants."
   });
   return agent;
 }
 
-/* Step 2: Create a Task that generates a story and comic strip */
-
 const taskYaml = `
-name: Storyteller
-description: Create a story based on an idea.
-
-tools:
-  - name: research_wikipedia
-    integration:
-      provider: wikipedia
-      method: search
+name: Site Structure Navigator
+description: Extract the relevant link from the site structure
 
 main:
-  # Step 1: Generate plot idea
-  - prompt:
-      - role: system
-        content: You are {{agent.name}}. {{agent.about}}
-      - role: user
-        content: >
-          Based on the idea '{{_.idea}}', generate a list of 5 plot ideas. Go crazy and be as creative as possible. Return your output as a list of long strings inside \`\`\`yaml tags at the end of your response.
-    unwrap: true
-
-  - evaluate:
-      plot_ideas: load_yaml(_.split('\`\`\`yaml')[1].split('\`\`\`')[0].strip())
-
-  # Step 2: Extract research fields from the plot ideas
-  - prompt:
-      - role: system
-        content: You are {{agent.name}}. {{agent.about}}
-      - role: user
-        content: >
-          Here are some plot ideas for a story:
-          {% for idea in _.plot_ideas %}
-          - {{idea}}
-          {% endfor %}
-
-          To develop the story, we need to research for the plot ideas.
-          What should we research? Write down wikipedia search queries for the plot ideas you think are interesting.
-          Return your output as a yaml list inside \`\`\`yaml tags at the end of your response.
-    unwrap: true
-    settings:
-      model: gpt-4o-mini
-      temperature: 0.7
-
-  - evaluate:
-      research_queries: load_yaml(_.split('\`\`\`yaml')[1].split('\`\`\`')[0].strip())
-
-  # Step 3: Research each plot idea
-  - foreach:
-      in: _.research_queries
-      do:
-        tool: research_wikipedia
-        arguments:
-          query: _
-
-  - evaluate:
-      wikipedia_results: 'NEWLINE.join([f"- {doc.metadata.title}: {doc.metadata.summary}" for item in _ for doc in item.documents])'
-
-  # Step 4: Think and deliberate
-  - prompt:
-      - role: system
-        content: You are {{agent.name}}. {{agent.about}}
-      - role: user
-        content: |-
-          Before we write the story, let's think and deliberate. Here are some plot ideas:
-          {% for idea in outputs[1].plot_ideas %}
-          - {{idea}}
-          {% endfor %}
-
-          Here are the results from researching the plot ideas on Wikipedia:
-          {{_.wikipedia_results}}
-
-          Think about the plot ideas critically. Combine the plot ideas with the results from Wikipedia to create a detailed plot for a story.
-          Write down all your notes and thoughts.
-          Then finally write the plot as a yaml object inside \`\`\`yaml tags at the end of your response. The yaml object should have the following structure:
-
-          \`\`\`yaml
-          title: "<string>"
-          characters:
-          - name: "<string>"
-            about: "<string>"
-          synopsis: "<string>"
-          scenes:
-          - title: "<string>"
-            description: "<string>"
-            characters:
-            - name: "<string>"
-              role: "<string>"
-            plotlines:
-            - "<string>"\`\`\`
-
-          Make sure the yaml is valid and the characters and scenes are not empty. Also take care of semicolons and other gotchas of writing yaml.
-    unwrap: true
-
-  - evaluate:
-      plot: "load_yaml(_.split('\`\`\`yaml')[1].split('\`\`\`')[0].strip())"
+- prompt:
+  - role: system
+    content: >-
+      Given the following JSON object {{inputs[0].site_structure}} containing the site structure please analyze this website site structure and determine the most likely location (i.e. url link) for where meditation retreats and their dates would be listed. 
+        Consider the following: 
+        1. Look for links containing words like "retreat", "events", "calendar", "schedule", or similar terms. 
+        2. If no direct events link is found, suggest the most logical place where retreat dates might be listed (e.g., under "About", "Community", etc.) 
+        3. If you can't find a likely location for events, return null.
+        Your response should be strictly be an array containing a single or multiple urls that are your best approximation of the links to the page(s) that contains the meditation retreat events OR null.
+        here is an example of what your output should look like: ["https://example.com"]. Do not give any other text in your response.
+    
+  unwrap: true
 `;
 
 async function createTask(agentId) {
@@ -137,38 +47,50 @@ async function createTask(agentId) {
   return task;
 }
 
-/* Step 3: Execute the Task */
-
-async function executeTask(taskId) {
+async function executeTask(taskId, siteStructure) {
   const execution = await client.executions.create(taskId, {
-    input: { idea: "A cat who learns to fly" },
+    input: { site_structure: siteStructure },
   });
 
-  // 🎉 Watch as the story and comic panels are generated
   while (true) {
     const result = await client.executions.get(execution.id);
     console.log(result.status, result.output);
 
     if (result.status === "succeeded" || result.status === "failed") {
-      // 📦 Once the execution is finished, retrieve the results
       if (result.status === "succeeded") {
         console.log(result.output);
+        return result.output;
       } else {
         throw new Error(result.error);
       }
-      break;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
 
-// Main function to run the example
 async function main() {
   try {
+    // Step 1: Extract the site structure
+    console.log("Extracting site structure...");
+    const siteStructure = await extractSiteStructure(url);
+    console.log("Site structure extracted:", siteStructure);
+
+    // Step 2: Create an agent
+    console.log("Creating agent...");
     const agent = await createAgent();
+    console.log("Agent created:", agent.id);
+
+    // Step 3: Create a task
+    console.log("Creating task...");
     const task = await createTask(agent.id);
-    await executeTask(task.id);
+    console.log("Task created:", task.id);
+
+    // Step 4: Execute the task with the extracted site structure
+    console.log("Executing task...");
+    const result = await executeTask(task.id, siteStructure);
+    console.log("Task execution completed. Result:", result);
+
   } catch (error) {
     console.error("An error occurred:", error);
   }
