@@ -24,7 +24,7 @@ const client = new Julep({
 
 const url = 'https://meditatewithtucker.com/';
 
-async function createAgent() {
+async function createAgent1() {
   const agent = await client.agents.create({
     name: "DOM Parsing and Navigation Agent",
     model: "claude-3.5-sonnet",
@@ -33,7 +33,16 @@ async function createAgent() {
   return agent;
 }
 
-const taskYaml = `
+async function createAgent2() {
+  const agent = await client.agents.create({
+    name: "JSON Web Data Parser",
+    model: "claude-3.5-sonnet",
+    about: "Extract and organize retreat information from scraped data."
+  });
+  return agent;
+}
+
+const taskYamlForAgent1 = `
 name: Site Structure Navigator
 description: Extract the relevant link from the site structure
 
@@ -52,14 +61,60 @@ main:
   unwrap: true
 `;
 
-async function createTask(agentId) {
-  const task = await client.tasks.create(agentId, yaml.parse(taskYaml));
+const taskYamlForAgent2 = `
+name: Site Structure Navigator
+description: Extract and organize retreat information from provided JSON data.
+
+main:
+- prompt:
+  - role: system
+    content: >-
+      Based on the provided scraped data, extract the upcoming meditation retreats and organize them in a structured format. Here is the data: {{inputs[0].scrapedData}}
+
+      Please return the retreats as a list of objects with the following structure:
+        title: <string>
+        date: <string>
+        location: <string>
+        url: <string>
+    
+  unwrap: true
+`;
+
+async function createTaskForAgent1(agentId) {
+  const task = await client.tasks.create(agentId, yaml.parse(taskYamlForAgent1));
   return task;
 }
 
-async function executeTask(taskId, siteStructure) {
+async function createTaskForAgent2(agentId) {
+  const task = await client.tasks.create(agentId, yaml.parse(taskYamlForAgent2));
+  return task;
+}
+
+async function executeTaskForAgent1(taskId, siteStructure) {
   const execution = await client.executions.create(taskId, {
     input: { site_structure: siteStructure },
+  });
+
+  while (true) {
+    const result = await client.executions.get(execution.id);
+    console.log(result.status, result.output);
+
+    if (result.status === "succeeded" || result.status === "failed") {
+      if (result.status === "succeeded") {
+        console.log(result.output);
+        return result.output;
+      } else {
+        throw new Error(result.error);
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
+
+async function executeTaskForAgent2(taskId, scrapedData) {
+  const execution = await client.executions.create(taskId, {
+    input: { scrapedData: scrapedData },
   });
 
   while (true) {
@@ -88,17 +143,45 @@ async function agent1(): Promise<string[]>  {
 
     // Step 2: Create an agent
     console.log("Creating agent...");
-    const agent = await createAgent();
+    const agent = await createAgent1();
     console.log("Agent created:", agent.id);
 
     // Step 3: Create a task
     console.log("Creating task...");
-    const task = await createTask(agent.id);
+    const task = await createTaskForAgent1(agent.id);
     console.log("Task created:", task.id);
 
     // Step 4: Execute the task with the extracted site structure
     console.log("Executing task...");
-    const result = JSON.parse(await executeTask(task.id, siteStructure));
+    const result = JSON.parse(await executeTaskForAgent1(task.id, siteStructure));
+    console.log('this is what the agent produced', result, "it is", typeof(result))
+    console.log("Task execution completed. Result:", result);
+
+    return result as string[];  // Explicitly cast the result to string[]
+
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return [];
+  }
+}
+
+
+async function agent2(unstructuredSiteData): Promise<string[]>  {
+  try {
+
+    // Step 1: Create an agent
+    console.log("Creating agent...");
+    const agent = await createAgent2();
+    console.log("Agent created:", agent.id);
+
+    // Step 2: Create a task
+    console.log("Creating task...");
+    const task = await createTaskForAgent2(agent.id);
+    console.log("Task created:", task.id);
+
+    // Step 4: Execute the task with the extracted site structure
+    console.log("Executing task...");
+    const result = JSON.parse(await executeTaskForAgent2(task.id, unstructuredSiteData));
     console.log('this is what the agent produced', result, "it is", typeof(result))
     console.log("Task execution completed. Result:", result);
 
@@ -129,6 +212,9 @@ async function main() {
   }).catch((error) => {
     console.error("An error occurred:", error);
   });
+
+  const structureWebData = await agent2(unstructuredSiteData)
+  console.log(structureWebData)
 }
 
 // Call the main function
