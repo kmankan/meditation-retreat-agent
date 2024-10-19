@@ -243,9 +243,13 @@ async function main() {
   ensureDirectoryExistence(outputPath);
 
   // Write the structuredWebData to a file
-  fs.writeFileSync(outputPath, JSON.stringify(structuredWebData, null, 2));
-  console.log(`Retreat information has been written to ${outputPath}`);
+  // Parse the JSON string if it's not already an object
+  const dataToWrite = typeof structuredWebData === 'string' 
+    ? JSON.parse(structuredWebData) 
+    : structuredWebData;
 
+  fs.writeFileSync(outputPath, JSON.stringify(dataToWrite, null, 2));
+  console.log(`Retreat information has been written to ${outputPath}`);
 }
 
 
