@@ -73,9 +73,12 @@ main:
 
       Please return the retreats as an array of objects with the following structure:
         title: <string>
-        date: <string>
+        start-date: <YYYY-MM-DD> as string
+        end-date: <YYYY-MM-DD> as string
         location: <string>
         url: <string>
+
+      Only output the array of objects. Do not include any other text or filler in your response.
     
   unwrap: true
 `;
