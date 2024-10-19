@@ -71,7 +71,7 @@ main:
     content: >-
       Based on the provided scraped data, extract the upcoming meditation retreats and organize them in a structured format. Here is the data: {{inputs[0].scrapedData}}
 
-      Please return the retreats as a list of objects with the following structure:
+      Please return the retreats as an array of objects with the following structure:
         title: <string>
         date: <string>
         location: <string>
@@ -181,11 +181,11 @@ async function agent2(unstructuredSiteData): Promise<string[]>  {
 
     // Step 4: Execute the task with the extracted site structure
     console.log("Executing task...");
-    const result = JSON.parse(await executeTaskForAgent2(task.id, unstructuredSiteData));
-    console.log('this is what the agent produced', result, "it is", typeof(result))
-    console.log("Task execution completed. Result:", result);
+    console.log(unstructuredSiteData)
+    const result = await executeTaskForAgent2(task.id, unstructuredSiteData);
+    console.log(result)
 
-    return result as string[];  // Explicitly cast the result to string[]
+    return result;  // Explicitly cast the result to string[]
 
   } catch (error) {
     console.error("An error occurred:", error);
@@ -199,7 +199,7 @@ async function main() {
   console.log('checking',urlToScrape)
   console.log(typeof(urlToScrape))
 
-  const unstructuredSiteData: Promise<UnstructuredSiteDataType> = Promise.all(
+  const unstructuredSiteData: UnstructuredSiteDataType = await Promise.all(
     urlToScrape.map(async (url) => {
       const content = await fetchWebsiteContent(url);
       return { url, content };
@@ -207,14 +207,10 @@ async function main() {
   );
 
   // Using the result
-  unstructuredSiteData.then((data) => {
-    console.log(data);
-  }).catch((error) => {
-    console.error("An error occurred:", error);
-  });
+  console.log('Unstructured site data:', unstructuredSiteData);
 
-  const structureWebData = await agent2(unstructuredSiteData)
-  console.log(structureWebData)
+  const structuredWebData = await agent2(unstructuredSiteData);
+  console.log(structuredWebData);
 }
 
 // Call the main function
