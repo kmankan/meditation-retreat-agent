@@ -63,7 +63,7 @@
         let currentDate = new Date();
 
         function fetchEvents() {
-            fetch('src/retreat-information/meditatewithtucker.json')
+            fetch('src/retreat-information/all-retreats.json')
                 .then(response => response.json())
                 .then(data => {
                     events = data;
