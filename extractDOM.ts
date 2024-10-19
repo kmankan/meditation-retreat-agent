@@ -8,7 +8,7 @@ interface NavItem {
   children?: NavItem[];
 }
 
-async function extractSiteStructure(url: string): Promise<string> {
+export async function extractSiteStructure(url: string): Promise<string> {
   let browser: Browser | null = null;
   let page: Page | null = null;
 
@@ -55,7 +55,9 @@ async function extractSiteStructure(url: string): Promise<string> {
     // Use filePath in the writeFile operation
     await fs.writeFile(filePath, structure);
 
-    return `Site structure for ${url} has been saved to ${filePath}`;
+    console.log(`Site structure for ${url} has been saved to ${filePath}`);
+    return structure;
+    
   } catch (error) {
     console.error('Error extracting site structure:', error);
     return `Error extracting site structure: ${error}`;
@@ -64,9 +66,3 @@ async function extractSiteStructure(url: string): Promise<string> {
     if (browser) await browser.close();
   }
 }
-
-// Example usage
-const url = 'https://meditatewithtucker.com/';
-extractSiteStructure(url)
-  .then(result => console.log(result))
-  .catch(error => console.error('Error:', error));
