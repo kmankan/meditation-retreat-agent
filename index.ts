@@ -1,5 +1,7 @@
 import { extractSiteStructure } from "./extractDOM";
 import { fetchWebsiteContent } from "./makeWebsiteReadable";
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface WebsiteContent {
   url: string;
@@ -23,6 +25,21 @@ const client = new Julep({
 });
 
 const url = 'https://meditatewithtucker.com/';
+
+function getWebsiteName(url: string): string {
+  const match = url.match(/\/\/([^.]+)\.com/);
+  return match ? match[1] : 'default';
+}
+
+// Function to ensure directory exists
+function ensureDirectoryExistence(filePath: string) {
+  const dirname = path.dirname(filePath);
+  if (fs.existsSync(dirname)) {
+    return true;
+  }
+  ensureDirectoryExistence(dirname);
+  fs.mkdirSync(dirname);
+}
 
 async function createAgent1() {
   const agent = await client.agents.create({
@@ -214,7 +231,23 @@ async function main() {
 
   const structuredWebData = await agent2(unstructuredSiteData);
   console.log(structuredWebData);
+
+   // Extract website name from URL
+   const websiteName = getWebsiteName(url);
+
+   // Set up the output directory and file path
+  const outputDir = path.join(__dirname, 'src', 'retreat-information');
+  const outputPath = path.join(outputDir, `${websiteName}.json`);
+
+  // Ensure the output directory exists
+  ensureDirectoryExistence(outputPath);
+
+  // Write the structuredWebData to a file
+  fs.writeFileSync(outputPath, JSON.stringify(structuredWebData, null, 2));
+  console.log(`Retreat information has been written to ${outputPath}`);
+
 }
+
 
 // Call the main function
 main().catch(error => console.error("Main execution error:", error));
