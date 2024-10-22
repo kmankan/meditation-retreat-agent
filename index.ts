@@ -2,6 +2,7 @@ import { extractSiteStructure } from "./extractDOM";
 import { fetchWebsiteContent } from "./makeWebsiteReadable";
 import * as fs from 'fs';
 import * as path from 'path';
+import { createClient } from '@supabase/supabase-js'
 
 interface WebsiteContent {
   url: string;
@@ -16,6 +17,11 @@ type UnstructuredSiteDataType = WebsiteContent[]
 const dotenv = require("dotenv");
 const { Julep } = require("@julep/sdk");
 const yaml = require("yaml");
+// Supabase psql backend
+const supabaseUrl = 'https://lrdkkiwhmtgotcfgzyxh.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY || ""
+const supabase = createClient(supabaseUrl, supabaseKey)
+
 
 dotenv.config();
 
@@ -131,7 +137,7 @@ const getRetreatInformation = (url:string) => {
   
     while (true) {
       const result = await client.executions.get(execution.id);
-      console.log(result.status, result.output);
+      console.log('something here',result.status, result.output);
   
       if (result.status === "succeeded" || result.status === "failed") {
         if (result.status === "succeeded") {
@@ -275,4 +281,4 @@ const getRetreatInformation = (url:string) => {
 //   getRetreatInformation(url)
 // }
 
-getRetreatInformation("https://www.spiritrock.org/")
+getRetreatInformation("https://www.shinzen.org/")

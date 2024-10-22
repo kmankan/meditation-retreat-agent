@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@julep/sdk": "^1.18.0",
+    "@prisma/client": "^5.21.1",
+    "@supabase/supabase-js": "^2.45.6",
     "axios": "^1.7.7",
-    "playwright": "^1.48.1"
+    "playwright": "^1.48.1",
+    "prisma": "^5.21.1"
   }
 }

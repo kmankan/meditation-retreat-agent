@@ -1,0 +1,60 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Teacher {
+  id        String     @id @default(cuid())
+  name      String
+  website   String?
+  bio       String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  favorites Favorite[]
+  retreats  Retreat[]
+}
+
+model Retreat {
+  id          String   @id @default(cuid())
+  eventName   String
+  location    String
+  startDate   DateTime
+  endDate     DateTime
+  bookingUrl  String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  teacherId   String
+  teacher     Teacher  @relation(fields: [teacherId], references: [id])
+
+  @@index([teacherId])
+  @@index([startDate, endDate])
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  favorites Favorite[]
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  teacherId String
+  createdAt DateTime @default(now())
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, teacherId])
+  @@index([userId])
+  @@index([teacherId])
+}
